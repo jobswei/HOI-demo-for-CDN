@@ -7,6 +7,11 @@ demo scripts for CDN algorithm
 * 预测结果的可视化
 * 标注格式以及动作/物体种类基于HICO-Det数据集(详见annotation文件夹)
 
+#### 可视化效果
+对单张图片进行预测，基于数量过滤，选择score最高的五个hoi对
+![](./outputs/HICO_test2015_00000002.jpg)
+![](./outputs/cmd.jpg)
+
 下面详细介绍各脚本的功能
 
 #### [predictor.py](./utils/predictor.py)
