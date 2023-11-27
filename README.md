@@ -33,7 +33,44 @@ class Predictor:
     * `obj_path` 和 `verb_path` 为编号文件的路径
 
 #### [demo.py](./utils/demo.py)
-* 在执行区域设置参数，参数设置和CDN的规则一样。需要注意，有一些参数可能是无用的！
-* `main`函数为图片输入，predict得到结果，可视化结果的全过程
+* 在执行区域设置参数，参数设置和CDN的规则一样。需要注意，有一些参数可能是无用的！(因为我懒得一个个改了，直接复制过来的)
+* 使用`Demo`类进行推理和可视化
+* obj_path,verb_path为类别和动作的map文件路径
+~~~python
+class Demo:
+    def __init__(self,predictor,output_dir,obj_path,verb_path):
+        ...
+~~~
+
+---
+
 
 如有补充或疑问，欢迎联系 3031864345@qq.com
+
+---
+### About Human-Object Interaction (HOI) Predictor with Demo Script
+
+Several algorithms have been proposed for Human-Object Interaction (HOI), but some algorithm codes lack demo files. Here, a demo script is provided specifically for the [CDN algorithm](https://github.com/YueLiao/CDN.git). With slight modifications, it can be adapted for other similar HOI algorithms.
+
+- **Single Image Prediction**
+- **Visualization of Prediction Results**
+- **Annotation Format and Action/Object Categories based on the HICO-Det Dataset (see the annotation folder)**
+
+#### Visualization Effects
+Prediction on a single image, filtering based on quantity, selecting the top five HOI pairs with the highest scores.
+![Image 1](./outputs/HICO_test2015_00000002.jpg)
+![Image 2](./outputs/cmd.jpg)
+
+Below, detailed descriptions of each script's functionality are provided:
+
+#### [`predictor.py`](./utils/predictor.py)
+
+Derived from the evaluation method for the HICODet dataset within the CDN algorithm, this script has been modified to create a `predict` method for predicting on any single image.
+`model` refers to the pre-trained model read in, `correct_mat_path` corresponds to the matching matrix for the HICODet dataset, and `source` denotes the input image path.
+```python
+class Predictor:
+    def __init__(self,model,postprocessors,correct_mat_path,args) -> None:
+        pass
+    def predict(self,source):
+        ...
+        return preds

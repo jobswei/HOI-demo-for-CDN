@@ -156,6 +156,38 @@ def get_args_parser():
 
     return parser
 
+class Demo:
+    def __init__(self,predictor,output_dir,obj_path,verb_path):
+        self.predictor=predictor
+        self.obj_path=obj_path
+        self.verb_path=verb_path
+        self.out_dir=output_dir
+
+    def _demo(self,source):
+        preds=self.predictor.predict(source)[0]
+        preds["filename"]=osp.basename(preds["filename"])
+        preds=filter_res_num(preds,num=20)
+        display(preds)
+        print(preds["filename"])
+        pairs=show_hoi(preds,self.obj_path,self.verb_path)
+        print()
+
+        file_path=source
+        image=cv2.imread(file_path)
+
+        for num,obj in enumerate(preds["predictions"]):
+            (x1, y1, x2, y2),category=tuple(map(int,obj["bbox"])),int(obj["category_id"])
+            color=(0, 255, 0) if category==0 else (255,0,0)
+            cv2.rectangle(image, (x1, y1), (x2, y2),color , 2)
+            cv2.putText(image, str(num) , (int((x1+x2)/2),y1),cv2.FONT_HERSHEY_SIMPLEX ,1, color, 2)
+        cv2.imwrite(osp.join(self.out_dir,f"{preds['filename']}"), image)
+    def __call__(self,source):
+        if type(source)==list:
+            for name in source:
+                self._demo(name)
+        elif type(source)==str:
+            self._demo(source)
+    
 def main(args):
     utils.init_distributed_mode(args)
     device = torch.device(args.device)
@@ -163,30 +195,27 @@ def main(args):
     model.to(device)
     checkpoint = torch.load(args.pretrained, map_location='cpu')
     model.load_state_dict(checkpoint['model'])
-
-    predector=Predictor(model,postprocessors,
+    predictor=Predictor(model,postprocessors,
             correct_mat_path="/home/wzy/CDN/data/annotations/corre_hico.npy",
             args=args)
+    demor=Demo(predictor,
+               "/home/wzy/CDN/outputs",
+               "/home/wzy/CDN/data/demo_video_fps2/hico/annotations/objs.txt",
+               "/home/wzy/CDN/data/annotations/verb.txt")
 
-    source="/home/wzy/CDN/data/hico_20160224_det/images/test2015/HICO_test2015_00000002.jpg"
+    # source="/home/wzy/CDN/data/hico_20160224_det/images/test2015/HICO_test2015_00000001.jpg"
+    # source="/home/wzy/CDN/tools/picta/imgs/0027.png"
+    # lis=os.listdir("/home/wzy/CDN/data/demo_video_fps2/hico/images/test2015/")
+    # random.shuffle(lis)
+    # temp_lis=lis[:10]
 
-    preds=predector.predict(source)[0]
-    preds["filename"]=osp.basename(preds["filename"])
-    preds=filter_res_num(preds,num=5)
-    display(preds)
-    print(preds["filename"])
-    pairs=show_hoi(preds,obj_path="/home/wzy/CDN/data/annotations/objs.txt",verb_path="/home/wzy/CDN/data/annotations/verb.txt",)
-    print()
+    source="/home/wzy/CDN/data/demo_video_fps2/hico/images/test2015/1_1020165953_0758.jpg"
+    lis=os.listdir("/home/wzy/CDN/outputs/")
+    source=[osp.join("/home/wzy/CDN/data/demo_video_fps2/hico/images/test2015/",name) 
+            for name in lis if name[:2]=="1_"]
+    demor(source)
 
-    file_path=source
-    image=cv2.imread(file_path)
-
-    for num,obj in enumerate(preds["predictions"]):
-        (x1, y1, x2, y2),category=tuple(map(int,obj["bbox"])),int(obj["category_id"])
-        color=(0, 255, 0) if category==0 else (255,0,0)
-        cv2.rectangle(image, (x1, y1), (x2, y2),color , 2)
-        cv2.putText(image, str(num) , (int((x1+x2)/2),y1),cv2.FONT_HERSHEY_SIMPLEX ,1, color, 2)
-    cv2.imwrite(osp.join(f"/home/wzy/CDN/outputs",f"{preds['filename']}"), image)
+    
 
 
 
@@ -195,9 +224,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-    args.pretrained="pretrained/hico_cdn_s.pth"
+    args.pretrained="/home/wzy/CDN/work_dir/checkpoint_last.pth"
     args.dataset_file="hico"
-    args.hoi_path="data/hico_20160224_det"
+    args.hoi_path="/home/wzy/CDN/data/demo_video_fps2/hico"
     args.num_obj_classes=80
     args.num_verb_classes=117
     args.backbone="resnet50"
